@@ -66,7 +66,7 @@ SHOW ERRORS
 
 
 
-/*Question 5    à vérifier*/
+/*Question 5    à tester*/
 
 
 CREATE or REPLACE PROCEDURE AffecterSalarieEquipe(
@@ -94,7 +94,7 @@ SHOW ERRORS
 
 
 
-/*Question 6    à finir*/
+/*Question 6    à tester*/
   
 
 CREATE or REPLACE PROCEDURE SetSalarieChef(
@@ -109,13 +109,13 @@ SELECT COUNT(*) INTO v_nb
 FROM EtreAffecte
 WHERE p_codeSalarie=codeSalarie AND p_codeEquipe=codeEquipe;
 
-/*IF v_nb>0 THEN
+IF v_nb>0 THEN
 UPDATE Equipes
 SET codeSalarieChef=p_codeSalarie
 WHERE codeEquipe=p_codeEquipe;
 ELSE 
 RAISE_APPLICATION_ERROR(-20001, 'Le salarié ne peut pas etre chef si il ne fait pas parti du groupe');
-END IF;*/
+END IF;
 
 END;
 /
@@ -123,7 +123,7 @@ SHOW ERRORS
 
 
 
-/*Question 7    à vérifier*/
+/*Question 7    à finir*/
 
 
 CREATE or REPLACE PROCEDURE AffecterSalarieProjet(
@@ -139,13 +139,13 @@ FROM EtreAffecte
 JOIN Projets ON EtreAffecte.codeEquipe=Projets.codeEquipe
 WHERE p_codeSalarie=codeSalarie AND p_codeProjet=codeProjet;
 
-IF v_nb>0 THEN
+/*IF v_nb>0 THEN
 UPDATE Equipes
 SET codeSalarieChef=p_codeSalarie
 WHERE codeEquipe=p_codeEquipe;
 ELSE 
 RAISE_APPLICATION_ERROR(-20001, 'Le salarié est deja affecté a au moins 3 équipes');
-END IF;
+END IF;*/
 
 END;
 /
