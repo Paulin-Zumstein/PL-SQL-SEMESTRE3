@@ -202,7 +202,7 @@ END IF;
 
 END;
 /
-SHOW ERROR
+SHOW ERRORS
 
 
 /*Question 10*/
@@ -235,7 +235,7 @@ SHOW ERRORS
 /*Question 12*/
 
 CREATE VIEW Affectations AS
-SELECT Salaries.codeSalarie, Salaries.nomSalarie, Salaries.prenomSalarie, Equipes.codeEquipe, Equipes.nomEquipe
+SELECT Salaries.codeSalarie, Salaries.nomSalarie, Salaries.prenomSalarie, Equipes.codeEquipe, E.nomEquipe
 FROM Salaries
 JOIN EtreAffecte ON Salaries.codeSalarie=EtreAffecte.codeSalarie
 Join Equipes ON Equipes.codeEquipe=Equipes.codeEquipe;
