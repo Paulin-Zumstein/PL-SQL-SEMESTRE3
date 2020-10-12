@@ -33,8 +33,15 @@ CONSTRAINT pk_Travailler PRIMARY KEY (codeSalarie, dateTravail),
 CONSTRAINT fk_Travailler_codeSalarie FOREIGN KEY (codeSalarie) REFERENCES Salaries(codeSalarie),
 CONSTRAINT fk_Travailler_codeProjet FOREIGN KEY (codeProjet) REFERENCES Projets(codePRojet));
 
+/* INSERTION DE DONNEES */ 
 
+INSERT INTO Salaries (codeSalarie, nomSalarie,prenomSalarie, nbTotalJourneesTravail) (SELECT * FROM Palleja.UNI_Salaries);
+INSERT INTO Equipes (codeEquipe, nomEquipe, codeSalarieChef) (SELECT * FROM Palleja.UNI_Equipes);
+INSERT INTO PROJETS (codeProjet, nomProjet, villeProjet, codeEquipe) (SELECT * FROM Palleja.UNI_Projets);
+INSERT INTO EtreAffecte (codeSalarie, codeEquipe) (SELECT * FROM Palleja.UNI_EtreAffecte);
+INSERT INTO Travailler (codeSalarie, dateTravail, codeProjet) (SELECT * FROM Palleja.UNI_Travailler);
 
+COMMIT;
 
 /* EXO  */
 
@@ -120,30 +127,35 @@ SHOW ERRORS
 /*---------QUESTION 7--------------*/
 
 
+
 CREATE or REPLACE PROCEDURE AffecterSalarieProjet(
 	p_codeSalarie EtreAffecte.codeSalarie%TYPE,
-	p_codeProjet Projets.codeProjet%TYPE) IS 
+	p_codeProjet Projets.codeProjet%TYPE, 
+	p_dateTravail Travailler.dateTravail%TYPE) IS 
 
-v_nb NUMBER;
+v_NBcodeE NUMBER;
 
 BEGIN
 
-SELECT COUNT(*) INTO v_nb
+SELECT count(EtreAffecte.codeEquipe) INTO v_NBcodeE
 FROM EtreAffecte
-JOIN Projets ON EtreAffecte.codeEquipe=Projets.codeEquipe
-WHERE p_codeSalarie=codeSalarie AND p_codeProjet=codeProjet;
+JOIN PROJETS ON PROJETS.codeEquipe=EtreAffecte.codeSalarie
+WHERE codeSalarie=p_codeSalarie AND codeProjet=p_codeProjet;
 
-/*IF v_nb>0 THEN
-UPDATE Equipes
-SET codeSalarieChef=p_codeSalarie
-WHERE codeEquipe=p_codeEquipe;
+IF v_NBcodeE>0 THEN
+AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, p_dateTravail);
 ELSE 
-RAISE_APPLICATION_ERROR(-20001, 'Le salarié est deja affecté  au moins 3 équipes');
-END IF;*/
+RAISE_APPLICATION_ERROR(-20001, 'Le salarié n est pas associé à cette equipe');
+END IF;
+
 
 END;
 /
 SHOW ERRORS
+
+
+
+
 /*---------QUESTION 4--------------*/
 /*---------QUESTION 4--------------*/
 /*---------QUESTION 4--------------*/
@@ -179,3 +191,13 @@ CALL SetSalarieChef('S4','E3');
 SELECT codeSalarieChef
 FROM Equipes
 WHERE codeEquipe = 'E3';
+
+CALL AffecterSalarieProjet('S2','P3','11/01/2014');
+SELECT nbTotalJourneesTravail
+FROM Salaries
+WHERE codeSalarie = 'S2';
+
+CALL AffecterSalarieProjet('S2','P5','12/01/2014');
+SELECT nbTotalJourneesTravail
+FROM Salaries
+WHERE codeSalarie = 'S2';
