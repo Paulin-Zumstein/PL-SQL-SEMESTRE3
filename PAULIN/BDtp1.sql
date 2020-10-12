@@ -135,18 +135,59 @@ v_NBcodeE NUMBER;
 
 BEGIN
 
-SELECT count(codeEquipe) INTO v_NBcodeE
+SELECT count(EtreAffecte.codeEquipe) INTO v_NBcodeE
 FROM EtreAffecte
 JOIN PROJETS ON PROJETS.codeEquipe=EtreAffecte.codeSalarie
-WHERE codeSalarie=p_codeSalarie ;
+WHERE codeSalarie=p_codeSalarie AND codeProjet=p_codeProjet;
 
 IF v_NBcodeE>0 THEN
 AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, p_dateTravail);
 ELSE 
-RAISE_APPLICATION_ERROR(-20001, 'Le salarié n est pas associé a cette equipe');
+RAISE_APPLICATION_ERROR(-20001, 'Le salarié n est pas associé à cette equipe');
 END IF;
 
 
 END;
 /
 SHOW ERRORS
+
+
+
+
+
+
+/*---------LES TESTS--------------*/
+CALL AjouterJourneeTravail('S2','P3','10/012014');
+SELECT  nbTotalJourneesTravail
+FROM Salaries
+WHERE codeSalarie = 'S2';
+
+CALL AffecterSalarieEquipe('S1','E3');
+SELECT * 
+FROM EtreAffecte
+WHERE codeSalarie = 'S1' AND codeEquipe = 'E3';
+
+CALL AffecterSalarieEquipe('S8','E1');
+SELECT * 
+FROM EtreAffecte
+WHERE codeSalarie = 'S8' AND codeEquipe = 'E1';
+
+CALL SetSalarieChef('S3','E4');
+SELECT codeSalarieChef
+FROM Equipes
+WHERE codeEquipe = 'E4';
+
+CALL SetSalarieChef('S4','E3');
+SELECT codeSalarieChef
+FROM Equipes
+WHERE codeEquipe = 'E3';
+
+CALL AffecterSalarieProjet('S2','P3','11/01/2014');
+SELECT nbTotalJourneesTravail
+FROM Salaries
+WHERE codeSalarie = 'S2';
+
+CALL AffecterSalarieProjet('S2','P5','12/01/2014');
+SELECT nbTotalJourneesTravail
+FROM Salaries
+WHERE codeSalarie = 'S2';
