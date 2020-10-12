@@ -128,7 +128,8 @@ SHOW ERRORS
 
 CREATE or REPLACE PROCEDURE AffecterSalarieProjet(
 	p_codeSalarie EtreAffecte.codeSalarie%TYPE,
-	p_codeProjet Projets.codeProjet%TYPE) IS 
+	p_codeProjet Projets.codeProjet%TYPE, 
+	p_dateTravail Travailler.dateTravail%TYPE) IS 
 
 v_NBcodeE NUMBER;
 
@@ -139,7 +140,7 @@ FROM EtreAffecte
 WHERE codeSalarie=p_codeSalarie;
 
 IF v_NBcodeE>0 THEN
-AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, GETDATE());
+AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, p_dateTravail);
 ELSE 
 RAISE_APPLICATION_ERROR(-20001, 'Le salarié n est pas associé a cette equipe');
 END IF;
