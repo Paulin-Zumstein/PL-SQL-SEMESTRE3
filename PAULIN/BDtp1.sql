@@ -66,7 +66,7 @@ SHOW ERRORS
 
 
 
-/*Question 5    à tester*/
+/*Question 5*/
 
 
 CREATE or REPLACE PROCEDURE AffecterSalarieEquipe(
@@ -94,7 +94,7 @@ SHOW ERRORS
 
 
 
-/*Question 6    à tester*/
+/*Question 6*/
   
 
 CREATE or REPLACE PROCEDURE SetSalarieChef(
@@ -123,7 +123,7 @@ SHOW ERRORS
 
 
 
-/*Question 7    à finir*/
+/*Question 7*/
 
 
 CREATE or REPLACE PROCEDURE AffecterSalarieProjet(
@@ -137,7 +137,8 @@ BEGIN
 
 SELECT count(codeEquipe) INTO v_NBcodeE
 FROM EtreAffecte
-WHERE codeSalarie=p_codeSalarie;
+JOIN PROJETS ON PROJETS.codeEquipe=EtreAffecte.codeSalarie
+WHERE codeSalarie=p_codeSalarie ;
 
 IF v_NBcodeE>0 THEN
 AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, p_dateTravail);
