@@ -132,7 +132,7 @@ fk_Equipes_ChefAffecte FOREIGN KEY (codeEquipe, codeSalarieChef)
 /*Question 7*/
 
 
-CREATE or REPLACE PROCEDURE AffecterSalarieProjet(
+CREATE or REPLACE PROCEDURE AjouterJourneeTravailSpec(
 	p_codeSalarie EtreAffecte.codeSalarie%TYPE,
 	p_codeProjet Projets.codeProjet%TYPE, 
 	p_dateTravail Travailler.dateTravail%TYPE) IS 
@@ -141,15 +141,19 @@ v_NBcodeE NUMBER;
 
 BEGIN
 
-SELECT count(EtreAffecte.codeEquipe) INTO v_NBcodeE
+SELECT count(*) INTO v_NBcodeE
 FROM EtreAffecte
-JOIN PROJETS ON PROJETS.codeEquipe=EtreAffecte.codeSalarie
+JOIN PROJETS ON PROJETS.codeEquipe=EtreAffecte.codeEquipe
 WHERE codeSalarie=p_codeSalarie AND codeProjet=p_codeProjet;
 
-IF v_NBcodeE>0 THEN
-AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, p_dateTravail);
-ELSE 
+IF v_NBcodeE=0 THEN
 RAISE_APPLICATION_ERROR(-20001, 'Le salarié n est pas associé à cette equipe');
+
+ELSE 
+INSERT INTO Travailler(codeSalarie,codeProjet,dateTravail) VALUES (p_codeSalarie,p_codeProjet,p_dateTravail);
+UPDATE Salaries
+SET nbTotalJourneesTravail = nbTotalJourneesTravail +1
+WHERE codeSalarie = p_codeSalarie;
 END IF;
 
 
