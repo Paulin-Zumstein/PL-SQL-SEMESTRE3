@@ -123,6 +123,12 @@ SHOW ERRORS
 
 
 
+ALTER TABLE Equipes ADD CONSTRAINT
+fk_Equipes_ChefAffecte FOREIGN KEY (codeEquipe, codeSalarieChef)
+					   REFERENCES EtreAffecte(codeEquipe,codeSalarie);
+
+
+
 /*Question 7*/
 
 
@@ -151,6 +157,88 @@ END;
 /
 SHOW ERRORS
 
+
+
+/*Question 8 Trigger*/
+
+
+CREATE OR REPLACE TRIGGER TriggerAjouterJourneeTravail
+AFTER
+INSERT
+ON Travailler
+FOR EACH ROW
+
+BEGIN
+
+UPDATE Salaries
+SET nbTotalJourneesTravail=nbTotalJourneesTravail+1
+WHERE codeSalarie=:NEW.codeSalarie;
+
+END;
+/
+SHOW ERRORS
+
+
+/*Question 9*/
+
+CREATE OR REPLACE TRIGGER TriggerAffecterSalarieEquipe
+BEFORE 
+INSERT 
+ON EtreAffecte
+FOR EACH ROW
+
+DECLARE
+v_nb NUMBER;
+
+BEGIN
+
+SELECT COUNT(codeEquipe) INTO v_nb
+FROM EtreAffecte
+WHERE codeSalarie=:NEW.codeSalarie;
+
+IF v_nb>=3 THEN 
+RAISE_APPLICATION_ERROR(-20001, 'Le salarié est deja affecté a au moins 3 équipes');
+END IF;
+
+END;
+/
+SHOW ERROR
+
+
+/*Question 10*/
+
+CREATE OR REPLACE TRIGGER TriggerAjouterJourneeTravail
+AFTER
+INSERT | DELETE
+ON Travailler
+FOR EACH ROW
+
+BEGIN
+
+IF (INSERTING) THEN
+UPDATE Salaries
+SET nbTotalJourneesTravail=nbTotalJourneesTravail+1
+WHERE codeSalarie=:NEW.codeSalarie;
+END IF;
+
+IF (DELETING) THEN
+UPDATE Salaries
+SET nbTotalJourneesTravail=nbTotalJourneesTravail11
+WHERE codeSalarie=:OLD.codeSalarie;
+END IF;
+
+END;
+/
+SHOW ERRORS
+
+
+/*Question 12*/
+
+CREATE VIEW Affectations AS
+SELECT Salaries.codeSalarie, Salaries.nomSalarie, Salaries.prenomSalarie, Equipes.codeEquipe, Equipes.nomEquipe
+FROM Salaries
+JOIN EtreAffecte ON Salaries.codeSalarie=EtreAffecte.codeSalarie
+Join Equipes ON Equipes.codeEquipe=Equipes.codeEquipe;
 
 
 
