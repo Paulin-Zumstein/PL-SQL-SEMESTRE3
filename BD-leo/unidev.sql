@@ -43,6 +43,12 @@ INSERT INTO Travailler (codeSalarie, dateTravail, codeProjet) (SELECT * FROM Pal
 
 COMMIT;
 
+CALL AjouterJourneeTravail('S2','P3','10/012014');
+CALL AffecterSalarieEquipe('S1','E3');
+CALL SetSalarieChef('S3','E4');
+CALL AjouterJourneeTravailSpec('S2','P3','11/01/2014');
+INSERT INTO Travailler VALUES ('S1','10/01/2014','P1');
+
 /* EXO  */
 
 
@@ -122,13 +128,16 @@ END;
 /
 SHOW ERRORS
 
+ALTER TABLE Equipes ADD CONSTRAINT
+fk_Equipes_ChefAffecte FOREIGN KEY (codeEquipe, codeSalarieChef)
+                       REFERENCES EtreAffecte(codeEquipe,codeSalarie);
 
 
 /*---------QUESTION 7--------------*/
 
 
 
-CREATE or REPLACE PROCEDURE AffecterSalarieProjet(
+CREATE or REPLACE PROCEDURE AjouterJourneeTravailSpec(
 	p_codeSalarie EtreAffecte.codeSalarie%TYPE,
 	p_codeProjet Projets.codeProjet%TYPE, 
 	p_dateTravail Travailler.dateTravail%TYPE) IS 
@@ -137,15 +146,19 @@ v_NBcodeE NUMBER;
 
 BEGIN
 
-SELECT count(EtreAffecte.codeEquipe) INTO v_NBcodeE
+SELECT count(*) INTO v_NBcodeE
 FROM EtreAffecte
-JOIN PROJETS ON PROJETS.codeEquipe=EtreAffecte.codeSalarie
+JOIN PROJETS ON PROJETS.codeEquipe=EtreAffecte.codeEquipe
 WHERE codeSalarie=p_codeSalarie AND codeProjet=p_codeProjet;
 
-IF v_NBcodeE>0 THEN
-AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, p_dateTravail);
-ELSE 
+IF v_NBcodeE=0 THEN
 RAISE_APPLICATION_ERROR(-20001, 'Le salarié n est pas associé à cette equipe');
+
+ELSE 
+INSERT INTO Travailler(codeSalarie,codeProjet,dateTravail) VALUES (p_codeSalarie,p_codeProjet,p_dateTravail);
+UPDATE Salaries
+SET nbTotalJourneesTravail = nbTotalJourneesTravail +1
+WHERE codeSalarie = p_codeSalarie;
 END IF;
 
 
@@ -156,6 +169,46 @@ SHOW ERRORS
 
 
 
+/*---------QUESTION 8--------------*/
+
+CREATE OR REPLACE TRIGGER tr_aft_ins_journeeTravaille
+AFTER INSERT ON Travailler
+FOR EACH ROW
+BEGIN
+UPDATE Salaries SET nbTotalJourneesTravail = nbTotalJourneesTravail + 1 
+WHERE codeSalarie =:NEW.codeSalarie;
+END;
+/
+SHOW ERRORS
+
+
+
+/*---------QUESTION 9--------------*/
+
+CREATE OR REPLACE TRIGGER tr_aft_ins_EtreAffecte
+BEFORE INSERT ON EtreAffecte
+FOR EACH ROW
+
+DECLARE
+v_nb NUMBER;
+
+BEGIN
+
+SELECT COUNT(codeEquipe) INTO v_nb
+FROM EtreAffecte
+WHERE codeSalarie=:NEW.codeSalarie;
+
+IF v_nb>=3 THEN 
+RAISE_APPLICATION_ERROR(-20001, 'Le salarié est déjà affecté à au moins 3 équipes');
+END IF;
+END;
+/
+SHOW ERRORS
+
+
+
+/*---------QUESTION 4--------------*/
+/*---------QUESTION 4--------------*/
 /*---------QUESTION 4--------------*/
 /*---------QUESTION 4--------------*/
 /*---------QUESTION 4--------------*/
@@ -167,11 +220,24 @@ SHOW ERRORS
 
 
 /*---------LES TESTS--------------*/
+
+# LES CALL
+
+
+CALL AjouterJourneeTravail('S2','P3','10/012014');
+CALL AffecterSalarieEquipe('S1','E3');
+CALL SetSalarieChef('S3','E4');
+CALL AjouterJourneeTravailSpec('S2','P3','11/01/2014');
+INSERT INTO Travailler VALUES ('S1','10/01/2014','P1');
+INSERT INTO EtreAffecte VALUES ('S2','E4');
+
+
+#4
 CALL AjouterJourneeTravail('S2','P3','10/012014');
 SELECT  nbTotalJourneesTravail
 FROM Salaries
 WHERE codeSalarie = 'S2';
-
+#5
 CALL AffecterSalarieEquipe('S1','E3');
 SELECT * 
 FROM EtreAffecte
@@ -181,7 +247,7 @@ CALL AffecterSalarieEquipe('S8','E1');
 SELECT * 
 FROM EtreAffecte
 WHERE codeSalarie = 'S8' AND codeEquipe = 'E1';
-
+#6
 CALL SetSalarieChef('S3','E4');
 SELECT codeSalarieChef
 FROM Equipes
@@ -191,13 +257,30 @@ CALL SetSalarieChef('S4','E3');
 SELECT codeSalarieChef
 FROM Equipes
 WHERE codeEquipe = 'E3';
-
-CALL AffecterSalarieProjet('S2','P3','11/01/2014');
+#7
+CALL AjouterJourneeTravailSpec('S2','P3','11/01/2014');
 SELECT nbTotalJourneesTravail
 FROM Salaries
 WHERE codeSalarie = 'S2';
 
-CALL AffecterSalarieProjet('S2','P5','12/01/2014');
+CALL AjouterJourneeTravailSpec('S2','P5','12/01/2014');
 SELECT nbTotalJourneesTravail
 FROM Salaries
 WHERE codeSalarie = 'S2';
+
+#8
+INSERT INTO Travailler VALUES ('S1','10/01/2014','P1');
+SELECT nbTotalJourneesTravail
+FROM Salaries
+WHERE codeSalarie = 'S1';
+
+#9
+INSERT INTO EtreAffecte VALUES ('S2','E4');
+SELECT *
+FROM EtreAffecte
+WHERE codeSalarie = 'S2' AND codeEquipe = 'E4';
+
+INSERT INTO EtreAffecte VALUES ('S7','E4');
+SELECT *
+FROM EtreAffecte
+WHERE codeSalarie = 'S7' AND codeEquipe = 'E4';
