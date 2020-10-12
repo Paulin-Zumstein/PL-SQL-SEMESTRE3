@@ -130,22 +130,20 @@ CREATE or REPLACE PROCEDURE AffecterSalarieProjet(
 	p_codeSalarie EtreAffecte.codeSalarie%TYPE,
 	p_codeProjet Projets.codeProjet%TYPE) IS 
 
-v_nb NUMBER;
+v_NBcodeE NUMBER;
 
 BEGIN
 
-SELECT COUNT(*) INTO v_nb
+SELECT count(codeEquipe) INTO v_NBcodeE
 FROM EtreAffecte
-JOIN Projets ON EtreAffecte.codeEquipe=Projets.codeEquipe
-WHERE p_codeSalarie=codeSalarie AND p_codeProjet=codeProjet;
+WHERE codeSalarie=p_codeSalarie;
 
-/*IF v_nb>0 THEN
-UPDATE Equipes
-SET codeSalarieChef=p_codeSalarie
-WHERE codeEquipe=p_codeEquipe;
+IF v_NBcodeE>0 THEN
+AjouterJourneeTravail(p_codeSalarie ,p_codeProjet, GETDATE());
 ELSE 
-RAISE_APPLICATION_ERROR(-20001, 'Le salarié est deja affecté a au moins 3 équipes');
-END IF;*/
+RAISE_APPLICATION_ERROR(-20001, 'Le salarié n est pas associé a cette equipe');
+END IF;
+
 
 END;
 /
