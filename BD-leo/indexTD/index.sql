@@ -27,3 +27,52 @@ INSERT INTO Commandes (SELECT * FROM Palleja.OPT_Commandes);
 INSERT INTO LignesCommande (SELECT * FROM Palleja.OPT_LignesCommande);
 
 COMMIT;
+
+
+/*---------QUESTION 1--------------*/
+SET TIMING ON;
+SET AUTOTRACE ON;
+
+/*---------QUESTION 2--------------*/
+SELECT sexeClient, villeClient
+FROM Clients
+WHERE nomClient='Palleja';
+
+/*---------QUESTION 3--------------*/
+SELECT *
+FROM Clients
+WHERE idClient = 1000;
+
+SELECT /*+ no_index(Clients pk_Clients) */ *
+FROM Clients
+WHERE idClient = 1000
+
+SET AUTOTRACE TRACEONLY;
+SELECT *
+FROM Clients
+WHERE idClient != 1000;
+
+SET AUTOTRACE TRACEONLY;
+SELECT /*+ no_index(Clients pk_Clients) */  *
+FROM Clients
+WHERE idClient != 1000;
+
+SET AUTOTRACE TRACEONLY;
+SELECT *
+FROM Commandes
+WHERE idCommande > 60000;
+
+SET AUTOTRACE TRACEONLY;
+SELECT *
+FROM Commandes
+WHERE idCommande > 99000;
+
+
+set
+
+
+/*---------QUESTION 4--------------*/
+/*---------QUESTION 4--------------*/
+/*---------QUESTION 4--------------*/
+/*---------QUESTION 4--------------*/
+/*---------QUESTION 4--------------*/
