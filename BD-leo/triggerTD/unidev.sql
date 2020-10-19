@@ -186,7 +186,9 @@ SHOW ERRORS
 /*---------QUESTION 9--------------*/
 
 CREATE OR REPLACE TRIGGER tr_aft_ins_EtreAffecte
-BEFORE INSERT ON EtreAffecte
+BEFORE 
+INSERT 
+ON EtreAffecte
 FOR EACH ROW
 
 DECLARE
@@ -199,11 +201,12 @@ FROM EtreAffecte
 WHERE codeSalarie=:NEW.codeSalarie;
 
 IF v_nb>=3 THEN 
-RAISE_APPLICATION_ERROR(-20001, 'Le salarié est déjà affecté à au moins 3 équipes');
+RAISE_APPLICATION_ERROR(-20001, 'Le salarié est deja affecté a au moins 3 équipes');
 END IF;
+
 END;
 /
-SHOW ERRORS
+SHOW ERROR
 
 
 
@@ -229,7 +232,7 @@ CALL AffecterSalarieEquipe('S1','E3');
 CALL SetSalarieChef('S3','E4');
 CALL AjouterJourneeTravailSpec('S2','P3','11/01/2014');
 INSERT INTO Travailler VALUES ('S1','10/01/2014','P1');
-INSERT INTO EtreAffecte VALUES ('S2','E4');
+
 
 
 #4
