@@ -166,17 +166,16 @@ SHOW ERRORS
 /*Question 8 Trigger*/
 
 
-CREATE OR REPLACE TRIGGER TriggerAjouterJourneeTravail
+CREATE OR REPLACE TRIGGER tr_aft_ins_Travailler
 AFTER
-INSERT
-ON Travailler
+INSERT ON Travailler
 FOR EACH ROW
 
 BEGIN
 
-UPDATE Salaries
+UPDATE Salaries 
 SET nbTotalJourneesTravail=nbTotalJourneesTravail+1
-WHERE codeSalarie=:NEW.codeSalarie;
+WHERE :NEW.codeSalarie=Salaries.codeSalarie;
 
 END;
 /
@@ -211,29 +210,49 @@ SHOW ERRORS
 
 /*Question 10*/
 
-CREATE OR REPLACE TRIGGER TriggerAjouterJourneeTravail
+CREATE OR REPLACE TRIGGER tr_aft_ins_Travailler
 AFTER
-INSERT | DELETE
-ON Travailler
+INSERT OR UPDATE OR DELETE OF codeSalarie ON Travailler
 FOR EACH ROW
 
-BEGIN
-
-IF (INSERTING) THEN
-UPDATE Salaries
-SET nbTotalJourneesTravail=nbTotalJourneesTravail+1
-WHERE codeSalarie=:NEW.codeSalarie;
+IF (INSERTING OR UPDATING) THEN
+UPDATE Salaries SET nbTotalJourneesTravail=nbTotalJourneesTravail+1 WHERE :NEW.codeSalarie=codeSalarie;
 END IF;
 
-IF (DELETING) THEN
-UPDATE Salaries
-SET nbTotalJourneesTravail=nbTotalJourneesTravail-1
-WHERE codeSalarie=:OLD.codeSalarie;
+IF (DELETING OR UPDATING) THEN
+UPDATE Salaries SET nbTotalJourneesTravail=nbTotalJourneesTravail-1 WHERE :OLD.codeSalarie=codeSalarie;
 END IF;
 
 END;
 /
 SHOW ERRORS
+
+
+--Question 11
+
+CREATE OR REPLACE TRIGGER tr_bef_ins_Travailler
+BEFORE INSERT ON Travailler
+FOR EACH ROW
+DECLARE
+
+nb_tuple NUMBER;
+
+BEGIN
+
+SELECT COUNT(*) INTO nb_tuple
+FROM EtreAffecte
+	JOIN Projets ON EtreAffecte.codeEquipe=Projets.codeEquipe
+WHERE EtreAffecte.codeSalarie=NEW.codeSalarie AND Projets.codeProjet=:NEW.codeProjet;
+
+IF (nb_tuple=0) THEN 
+RAISE_APPLICATION_ERROR(-20003, 'UN SALARIE NE PAUT PAS ETRE DANS UN PROJET QUI NE CORRESPOND PAS A SON EQUIPE');
+END IF;
+
+
+END;
+/
+SHOW ERRORS
+
 
 
 /*Question 12*/
@@ -241,114 +260,114 @@ SHOW ERRORS
 CREATE OR REPLACE VIEW Affectations AS
 SELECT Salaries.codeSalarie, Salaries.nomSalarie, Salaries.prenomSalarie, Equipes.codeEquipe, Equipes.nomEquipe
 FROM Salaries
-JOIN EtreAffecte ON Salaries.codeSalarie=EtreAffecte.codeSalarie
-Join Equipes ON Equipes.codeEquipe=Equipes.codeEquipe;
+	JOIN EtreAffecte ON Salaries.codeSalarie=EtreAffecte.codeSalarie
+	Join Equipes ON Equipes.codeEquipe=Equipes.codeEquipe;
 
 
 
 /*Question 13*/
 
+--A/
 
-/*solution(solution uniquement du premiers point du 13) si l'insertion dans la vue ne créé ps d'insertion dans EtreAffecte
-
-CREATE OR REPLACE TRIGGER TriggerInsertAffectations
-INSTEAD OF INSERT ON Affectations
+CREATE OR REPLACE TRIGGER triggerAuLeuInsererVue
+INSTEAD OF
+INSERT ON Affectations
 FOR EACH ROW
-
 DECLARE
-v_nbSalarie NUMBER;
-v_nbSalarieVerif NUMBER;
-v_nbEquipe NUMBER;
-v_nbEquipeVerif NUMBER;
-v_nbAffectation NUMBER;
 
-BEGIN
+nb_salaries NUMBER;
+nb_equipes NUMBER;
 
-RAISE_APPLICATION_ERROR(-20001, ''); // fonction si RAISE ne stop pas l'xécution du trigger
+BEGIN 
 
-SELECT COUNT(*) INTO v_nbSalarie
-FROM Salaries
-WHERE codeSalarie=:NEW.codeSalarie;
-
-SELECT COUNT(*) INTO v_nbEquipe
+SELECT COUNT(*) INTO nb_equipes
 FROM Equipes
 WHERE codeEquipe=:NEW.codeEquipe;
 
-SELECT COUNT(*) INTO v_nbAffectation
-FROM EtreAffecte
-WHERE codeEquipe=:NEW.codeEquipe AND codeEquipe=:NEW.codeEquipe;
+IF (nb_equipes=0) THEN
+INSERT INTO Equipes (codeEquipe,nomEquipe, codeSalarieChef)
+	VALUES (:NEW.codeEquipe,:NEW.nomEquipe,NULL);
+END IF;
 
-IF v_nbAffectation=0 THEN
-	IF v_nbEquipe>0 AND v_nbSalarie>0 THEN
-	INSERT INTO EtreAffecte(codeSalarie,codeEquipe)
-	VALUES(:NEW.codeSalarie,:NEW.codeEquipe);
-	ELSE
-		IF v_nbEquipe=0 THEN
-		INSERT INTO Equipes(codeEquipe,nomEquipe,codeSalarieChef)
-		VALUES(:NEW.codeEquipe:NEW.nomEquipe,NULL;
-		END IF;
+SELECT COUNT(*) INTO nb_salaries
+FROM Salaries
+WHERE codeSalarie=:NEW.codeSalarie;
 
-		IF v_nbSalarie=0 THEN
-		INSERT INTO Salaries(codeSalarie,nomSalarie,prenomSalarie,nbTotalJourneesTravail)
-		VALUES(:NEW.codeSalarie,:NEW.nomSalarie,:NEW.prenomSalarie,0);
-		END IF;
+IF (nb_salaries=0) THEN
+INSERT INTO Salaries (codeSalarie, nomSalarie, prenomSalarie, nbTotalJourneesTravail)
+	VALUES (:NEW.codeSalarie, :NEW.nomSalarie, :NEW.prenomSalarie, 0);
+END IF;
 
-		INSERT INTO EtreAffecte(codeSalarie,codeEquipe)
-		VALUES(:NEW.codeSalarie,:NEW.codeEquipe);
-	END IF;
-END IF
+INSERT INTO EtreAffecte (codeSalarie, codeEquipe)
+	VALUES (:NEW.codeSalarie,:NEW.codeEquipe);
 
 END;
 /
 SHOW ERRORS
 
-Sinon cette solution :*/
 
+--B/
 
-CREATE OR REPLACE TRIGGER TriggerInsertAffectations
-INSTEAD OF INSERT ON Affectations
+CREATE OR REPLACE TRIGGER triggerAuLeuInsererVue
+INSTEAD OF
+INSERT ON Affectations
 FOR EACH ROW
-
 DECLARE
-v_nbSalarie NUMBER;
-v_nbSalarieVerif NUMBER;
-v_nbEquipe NUMBER;
-v_nbEquipeVerif NUMBER;
-v_nbAffectation NUMBER;
 
-BEGIN
+nb_codeSalaries NUMBER;
+nb_codeEquipes NUMBER;
 
+nb_salaries NUMBER;
+nb_equipes NUMBER;
 
-/*SOLUTION COMPLETE MAIS A VERIFIER*/
-SELECT COUNT(*) INTO v_nbSalarie
-FROM Salaries
-WHERE codeSalarie=:NEW.codeSalarie AND nomSalarie=:NEW.nomSalarie AND prenomSalarie=:NEW.prenomSalarie ;
+BEGIN 
 
-SELECT COUNT(*) INTO v_nbSalarieVerif
-FROM Salaries
-WHERE codeSalarie=:NEW.codeSalarie;
-
-SELECT COUNT(*) INTO v_nbEquipe
-FROM Equipes
-WHERE codeEquipe=:NEW.codeEquipe AND nomEquipe=:NEW.nomEquipe;
-
-SELECT COUNT(*) INTO v_nbEquipe
+SELECT COUNT(*) INTO nb_codeEquipes
 FROM Equipes
 WHERE codeEquipe=:NEW.codeEquipe;
 
-IF v_nbSalarie=v_nbSalarieVerif AND v_nbEquipe=v_nbEquipeVerif THEN
-	IF v_nbSalarie=0 THEN
-	INSERT INTO Salaries(codeSalarie,nomSalarie,prenomSalarie,nbTotalJourneesTravail)
-	VALUES(:NEW.codeSalarie,:NEW.nomSalarie,:NEW.prenomSalarie,0);
+
+
+IF (nb_equipes>0) THEN
+	SELECT COUNT(*) INTO nb_equipes
+	FROM Equipes
+	WHERE codeEquipe=:NEW.codeEquipe AND nomEquipe=:NEW.nomEquipe;
+
+	IF (nb_equipes=0)THEN
+		RAISE_APPLICATION_ERROR(-20003, 'INCOHERENCE ENTRE LES ATTRIBUTS DE EQUIPE');
 	END IF;
 
-	IF v_nbEquipe=0 THEN
-	INSERT INTO Equipes(codeEquipe,nomEquipe,codeSalarieChef)
-	VALUES(:NEW.codeEquipe,:NEW.nomEquipe,NULL;
-	END IF;
 ELSE 
-RAISE_APPLICATION_ERROR(-20001, 'les attributs ne sont pas bon'); 
+	INSERT INTO Equipes (codeEquipe,nomEquipe, codeSalarieChef)
+		VALUES (:NEW.codeEquipe,:NEW.nomEquipe,NULL);
 END IF;
+
+
+
+SELECT COUNT(*) INTO nb_codeSalaries
+FROM Salaries
+WHERE codeSalarie=:NEW.codeSalarie;
+
+IF (nb_salaries>0) THEN
+	SELECT COUNT(*) INTO nb_salaries
+	FROM SALARIE
+	WHERE codeSalarie=:NEW AND nomSalarie=:NEW.nomSalarie AND prenomSalarie=:NEW.prenomSalarie;
+
+	IF(nb_salaries=0) THEN
+		RAISE_APPLICATION_ERROR(-20003, 'INCOHERENCE ENTRE LES ATTRIBUTS DE SALARIE');
+	END IF;
+
+ELSE
+	INSERT INTO Salaries (codeSalarie, nomSalarie, prenomSalarie, nbTotalJourneesTravail)
+		VALUES (:NEW.codeSalarie, :NEW.nomSalarie, :NEW.prenomSalarie, 0);
+END IF;
+
+
+
+INSERT INTO EtreAffecte (codeSalarie, codeEquipe)
+	VALUES (:NEW.codeSalarie,:NEW.codeEquipe)
+
+
 
 END;
 /
